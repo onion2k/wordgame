@@ -1,0 +1,157 @@
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+
+type Cell = { row: number; col: number }
+
+const isAdjacent = (a: Cell, b: Cell) => {
+  const rowDiff = Math.abs(a.row - b.row)
+  const colDiff = Math.abs(a.col - b.col)
+  return rowDiff <= 1 && colDiff <= 1 && !(rowDiff === 0 && colDiff === 0)
+}
+
+function GameArea() {
+  const grid = [
+    ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+    ['I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'],
+    ['Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X'],
+    ['Y', 'Z', 'A', 'B', 'C', 'D', 'E', 'F'],
+    ['G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'],
+    ['O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V'],
+    ['W', 'X', 'Y', 'Z', 'A', 'B', 'C', 'D'],
+    ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'],
+  ]
+
+  const [path, setPath] = useState<Cell[]>([])
+  const [isDragging, setIsDragging] = useState(false)
+  const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([])
+  const [boardSize, setBoardSize] = useState({ width: 0, height: 0 })
+  const boardRef = useRef<HTMLDivElement | null>(null)
+  const tileRefs = useRef<Record<string, HTMLSpanElement | null>>({})
+  const selectedWord = path.map((cell) => grid[cell.row][cell.col]).join('')
+
+  const startDrag = (cell: Cell) => {
+    setIsDragging(true)
+    setPath([cell])
+  }
+
+  const extendPath = (cell: Cell) => {
+    if (!isDragging) return
+    setPath((currentPath) => {
+      const last = currentPath[currentPath.length - 1]
+      if (!last) return [cell]
+      if (!isAdjacent(last, cell)) return currentPath
+      const previous = currentPath[currentPath.length - 2]
+      if (previous && previous.row === cell.row && previous.col === cell.col) {
+        return currentPath.slice(0, -1)
+      }
+      const alreadySelected = currentPath.some(
+        (selectedCell) => selectedCell.row === cell.row && selectedCell.col === cell.col
+      )
+      if (alreadySelected) return currentPath
+
+      return [...currentPath, cell]
+    })
+  }
+
+  const stopDrag = () => {
+    setIsDragging(false)
+    setPath([])
+    setLinePoints([])
+  }
+
+  useEffect(() => {
+    window.addEventListener('pointerup', stopDrag)
+    return () => window.removeEventListener('pointerup', stopDrag)
+  }, [])
+
+  const computeLine = () => {
+    if (!boardRef.current) return { points: [], size: { width: 0, height: 0 } }
+    const boardRect = boardRef.current.getBoundingClientRect()
+    const points = path
+      .map((cell) => {
+        const key = `${cell.row}-${cell.col}`
+        const el = tileRefs.current[key]
+        if (!el) return null
+        const rect = el.getBoundingClientRect()
+        return {
+          x: rect.left - boardRect.left + rect.width / 2,
+          y: rect.top - boardRect.top + rect.height / 2,
+        }
+      })
+      .filter((point): point is { x: number; y: number } => Boolean(point))
+
+    return { points, size: { width: boardRect.width, height: boardRect.height } }
+  }
+
+  useLayoutEffect(() => {
+    const { points, size } = computeLine()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setBoardSize(size)
+    setLinePoints(points)
+  }, [path])
+
+  useLayoutEffect(() => {
+    const handleResize = () => {
+      const { points, size } = computeLine()
+      setBoardSize(size)
+      setLinePoints(points)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [path])
+
+  const isActive = (rowIndex: number, columnIndex: number) =>
+    path.some((cell) => cell.row === rowIndex && cell.col === columnIndex)
+
+  return (
+    <section className="game-area" aria-label="Game board">
+      <div className="board" ref={boardRef}>
+        <svg
+          className="selection-line"
+          viewBox={`0 0 ${Math.max(boardSize.width, 1)} ${Math.max(boardSize.height, 1)}`}
+          preserveAspectRatio="none"
+        >
+          <polyline
+            points={linePoints.map((point) => `${point.x},${point.y}`).join(' ')}
+            pathLength="1"
+          />
+        </svg>
+        {grid.map((row, rowIndex) => (
+          <div className="row" key={`row-${rowIndex}`}>
+            {row.map((letter, columnIndex) => {
+              const active = isActive(rowIndex, columnIndex)
+              const key = `${rowIndex}-${columnIndex}`
+              return (
+                <span
+                  className={`tile${active ? ' active' : ''}`}
+                  key={`tile-${rowIndex}-${columnIndex}`}
+                  ref={(el) => {
+                    tileRefs.current[key] = el
+                  }}
+                  onPointerDown={(event) => {
+                    event.preventDefault()
+                    startDrag({ row: rowIndex, col: columnIndex })
+                  }}
+                  onPointerEnter={() => extendPath({ row: rowIndex, col: columnIndex })}
+                  onPointerUp={stopDrag}
+                >
+                  {letter}
+                </span>
+              )
+            })}
+          </div>
+        ))}
+      </div>
+
+      <div className="selected-word" aria-live="polite">
+        <span className="selected-word__value">{selectedWord || '...'}</span>
+      </div>
+
+      <div className="controls">
+        <button type="button">Shuffle</button>
+        <button type="button" className="primary">Submit guess</button>
+      </div>
+    </section>
+  )
+}
+
+export default GameArea
