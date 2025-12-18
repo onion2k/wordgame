@@ -49,11 +49,13 @@
   display: grid;
   gap: 0.65rem;
   justify-items: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
 }
 
 .row {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--grid-size, 8), minmax(0, 1fr));
   gap: 0.55rem;
   width: 100%;
 }
@@ -62,7 +64,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 52px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   border-radius: 12px;
   border: 1px dashed #cbd5e1;
   font-weight: 700;

@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 
 type Cell = { row: number; col: number }
+type GameAreaProps = { gridSize?: number }
 
 const isAdjacent = (a: Cell, b: Cell) => {
   const rowDiff = Math.abs(a.row - b.row)
@@ -21,17 +22,15 @@ const isPointerInCenter = (event: ReactPointerEvent<HTMLSpanElement>) => {
   return event.clientX >= minX && event.clientX <= maxX && event.clientY >= minY && event.clientY <= maxY
 }
 
-function GameArea() {
-  const grid = [
-    ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-    ['I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'],
-    ['Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X'],
-    ['Y', 'Z', 'A', 'B', 'C', 'D', 'E', 'F'],
-    ['G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'],
-    ['O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V'],
-    ['W', 'X', 'Y', 'Z', 'A', 'B', 'C', 'D'],
-    ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'],
-  ]
+function GameArea({ gridSize = 8 }: GameAreaProps) {
+  const clampedSize = Math.max(1, Math.floor(gridSize))
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  const grid = Array.from({ length: clampedSize }, (_, rowIndex) =>
+    Array.from(
+      { length: clampedSize },
+      (_, columnIndex) => alphabet[(rowIndex * clampedSize + columnIndex) % alphabet.length]
+    )
+  )
 
   const [path, setPath] = useState<Cell[]>([])
   const [isDragging, setIsDragging] = useState(false)
@@ -117,7 +116,7 @@ function GameArea() {
 
   return (
     <section className="game-area" aria-label="Game board">
-      <div className="board" ref={boardRef}>
+      <div className="board" ref={boardRef} style={{ ['--grid-size' as const]: clampedSize }}>
         <svg
           className="selection-line"
           viewBox={`0 0 ${Math.max(boardSize.width, 1)} ${Math.max(boardSize.height, 1)}`}

@@ -10,7 +10,7 @@ function App() {
         <p className="tagline">Guess the hidden word in as few turns as you can.</p>
       </header>
 
-      <GameArea />
+      <GameArea gridSize={8} />
 
       <section className="notification" aria-live="polite">
         <p>Tap tiles to build a guess. You have 5 attempts left.</p>
