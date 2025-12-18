@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 
 type Cell = { row: number; col: number }
 
@@ -6,6 +7,18 @@ const isAdjacent = (a: Cell, b: Cell) => {
   const rowDiff = Math.abs(a.row - b.row)
   const colDiff = Math.abs(a.col - b.col)
   return rowDiff <= 1 && colDiff <= 1 && !(rowDiff === 0 && colDiff === 0)
+}
+
+const isPointerInCenter = (event: ReactPointerEvent<HTMLSpanElement>) => {
+  const rect = event.currentTarget.getBoundingClientRect()
+  const insetX = rect.width * 0.2
+  const insetY = rect.height * 0.2
+  const minX = rect.left + insetX
+  const maxX = rect.right - insetX
+  const minY = rect.top + insetY
+  const maxY = rect.bottom - insetY
+
+  return event.clientX >= minX && event.clientX <= maxX && event.clientY >= minY && event.clientY <= maxY
 }
 
 function GameArea() {
@@ -129,9 +142,13 @@ function GameArea() {
                   }}
                   onPointerDown={(event) => {
                     event.preventDefault()
+                    if (!isPointerInCenter(event)) return
                     startDrag({ row: rowIndex, col: columnIndex })
                   }}
-                  onPointerEnter={() => extendPath({ row: rowIndex, col: columnIndex })}
+                  onPointerMove={(event) => {
+                    if (!isDragging || !isPointerInCenter(event)) return
+                    extendPath({ row: rowIndex, col: columnIndex })
+                  }}
                   onPointerUp={stopDrag}
                 >
                   {letter}
