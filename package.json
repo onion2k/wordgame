@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "build:words": "node scripts/build-words.mjs",
+    "prebuild": "npm run build:words",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
