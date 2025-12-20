@@ -98,6 +98,7 @@
   --control-min-width: 120px;
   --count-min-width: calc(var(--space-unit) * 8);
   --list-gap: calc(var(--space-unit) * 2);
+  --found-words-row-size: 2.6rem;
   --hover-raise: calc(var(--space-unit) * -0.4);
 
   --radius-lg: 16px;

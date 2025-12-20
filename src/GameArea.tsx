@@ -142,21 +142,34 @@ function GameArea({ gridSize = 8, words = [], dictionary, timerSeconds = 60 }: G
       ) : null}
 
       <div className="selected-word" aria-live="polite">
-        <span className="selected-word__value">{selectedWord || '...'}</span>
+        <span
+          key={selectedWord || 'placeholder'}
+          className={`selected-word__value${selectedWord ? '' : ' is-placeholder'}`}
+        >
+          {selectedWord || '...'}
+        </span>
       </div>
 
       <div className="found-words">
         <div className="found-words__header">
           <span>Found words</span>
-          <span className="found-words__score-total">Score {totalScore}</span>
-          <span className="found-words__count">{foundWords.length}</span>
+          <span key={`score-${totalScore}`} className="found-words__score-total">
+            Score {totalScore}
+          </span>
+          <span key={`count-${foundWords.length}`} className="found-words__count">
+            {foundWords.length}
+          </span>
         </div>
         {foundWords.length === 0 ? (
           <p className="found-words__empty">No matches yet. Start dragging tiles!</p>
         ) : (
           <ul className="found-words__list">
-            {foundWords.map(({ word, score }) => (
-              <li key={word} className="found-words__item">
+            {foundWords.map(({ word, score }, index) => (
+              <li
+                key={word}
+                className="found-words__item"
+                style={{ ['--list-delay' as const]: `${index * 40}ms` }}
+              >
                 <span className="found-words__word">{word}</span>
                 <span className="found-words__score">{score}</span>
               </li>
