@@ -1,7 +1,8 @@
 import './App.css'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import GameArea from './GameArea'
+import { sanitizeWord } from './game/words'
 import wordsTxt from './words.filtered.txt?raw'
 
 type GameConfig = {
@@ -10,13 +11,41 @@ type GameConfig = {
   gridSize: number
   words: string[]
   timerSeconds: number
+  dictionary?: string[]
+  removeOnMatch?: boolean
+  targetWords?: string[]
+  wordPlacement?: 'line' | 'path'
 }
 
-function App() {
+type AppProps = {
+  bookTitle?: string
+  bookAuthor?: string
+}
+
+const GAME_MODE_COOKIE = 'bookworm_game_mode'
+
+const readCookie = (name: string) => {
+  if (typeof document === 'undefined') return null
+  const parts = document.cookie.split(';').map((part) => part.trim())
+  const match = parts.find((part) => part.startsWith(`${name}=`))
+  if (!match) return null
+  return decodeURIComponent(match.slice(name.length + 1))
+}
+
+function App({ bookTitle = 'Pride and Prejudice', bookAuthor = 'Jane Austen' }: AppProps) {
   const dictionary = wordsTxt
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
+  const bookTargets = useMemo(
+    () =>
+      [bookTitle, bookAuthor].map((word) => word.trim()).filter((word) => word.length > 0),
+    [bookAuthor, bookTitle]
+  )
+  const bookGridSize = useMemo(() => {
+    const lengths = bookTargets.map((word) => sanitizeWord(word).length).filter((len) => len > 0)
+    return Math.max(10, ...lengths)
+  }, [bookTargets])
   const gameConfigs: GameConfig[] = useMemo(
     () => [
       {
@@ -40,11 +69,40 @@ function App() {
         words: ['BREEZE', 'CALM', 'FLOAT', 'DRIFT', 'GLOW'],
         timerSeconds: 0,
       },
+      {
+        id: 'book-hunt',
+        name: 'Book Hunt',
+        gridSize: 10,
+        words: bookTargets,
+        dictionary: bookTargets,
+        timerSeconds: 0,
+        removeOnMatch: false,
+        targetWords: bookTargets,
+        wordPlacement: 'path',
+      },
     ],
-    []
+    [bookGridSize, bookTargets]
   )
-  const [activeGameId, setActiveGameId] = useState(gameConfigs[0]?.id ?? 'classic')
+  const [activeGameId, setActiveGameId] = useState(() => {
+    const savedId = readCookie(GAME_MODE_COOKIE)
+    if (savedId && gameConfigs.some((game) => game.id === savedId)) {
+      return savedId
+    }
+    return gameConfigs[0]?.id ?? 'classic'
+  })
   const activeGame = gameConfigs.find((game) => game.id === activeGameId) ?? gameConfigs[0]
+
+  useEffect(() => {
+    if (gameConfigs.some((game) => game.id === activeGameId)) return
+    setActiveGameId(gameConfigs[0]?.id ?? 'classic')
+  }, [activeGameId, gameConfigs])
+
+  useEffect(() => {
+    if (!activeGameId) return
+    document.cookie = `${GAME_MODE_COOKIE}=${encodeURIComponent(
+      activeGameId
+    )}; max-age=31536000; path=/; samesite=lax`
+  }, [activeGameId])
 
   return (
     <div className="app-shell">
@@ -75,8 +133,11 @@ function App() {
         <GameArea
           gridSize={activeGame.gridSize}
           words={activeGame.words}
-          dictionary={dictionary}
+          dictionary={activeGame.dictionary ?? dictionary}
           timerSeconds={activeGame.timerSeconds}
+          removeOnMatch={activeGame.removeOnMatch}
+          targetWords={activeGame.targetWords}
+          wordPlacement={activeGame.wordPlacement}
         />
       ) : null}
     </div>

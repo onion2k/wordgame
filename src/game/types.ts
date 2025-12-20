@@ -4,6 +4,9 @@ export type GameAreaProps = {
   words?: string[]
   dictionary?: string[]
   timerSeconds?: number
+  removeOnMatch?: boolean
+  targetWords?: string[]
+  wordPlacement?: 'line' | 'path'
 }
 export type Tile = { id: string; letter: string }
 export type TrieNode = { children: Map<string, TrieNode>; isWord: boolean }

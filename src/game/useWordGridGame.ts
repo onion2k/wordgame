@@ -15,6 +15,8 @@ export type UseWordGridGameOptions = {
   alphabet?: string
   scoringFn?: (word: string) => number
   interactionDisabled?: boolean
+  removeOnMatch?: boolean
+  wordPlacement?: 'line' | 'path'
 }
 
 export type UseWordGridGameResult = {
@@ -44,6 +46,8 @@ export const useWordGridGame = ({
   alphabet = ALPHABET,
   scoringFn,
   interactionDisabled = false,
+  removeOnMatch = true,
+  wordPlacement = 'line',
 }: UseWordGridGameOptions): UseWordGridGameResult => {
   const clampedSize = Math.max(1, Math.floor(gridSize))
   const scoreWord = useCallback((word: string) => (scoringFn ? scoringFn(word) : word.length), [
@@ -52,7 +56,7 @@ export const useWordGridGame = ({
   const tileIdRef = useRef(0)
   const createTile = useCallback((letter: string) => ({ id: `tile-${tileIdRef.current++}`, letter }), [])
   const [grid, setGrid] = useState<Array<Array<Tile | null>>>(() =>
-    buildDefaultGrid(clampedSize, words, createTile)
+    buildDefaultGrid(clampedSize, words, createTile, wordPlacement)
   )
   const allWords = useMemo(() => {
     const source = dictionary && dictionary.length > 0 ? dictionary : words
@@ -83,7 +87,7 @@ export const useWordGridGame = ({
 
   useEffect(() => {
     tileIdRef.current = 0
-    setGrid(buildDefaultGrid(clampedSize, words, createTile))
+    setGrid(buildDefaultGrid(clampedSize, words, createTile, wordPlacement))
     setPath([])
     setIsDragging(false)
     setLinePoints([])
@@ -91,7 +95,7 @@ export const useWordGridGame = ({
     setNewIds(new Set())
     setIsResolving(false)
     setFoundWords([])
-  }, [clampedSize, createTile, words])
+  }, [clampedSize, createTile, wordPlacement, words])
 
   const startDrag = useCallback(
     (cell: Cell) => {
@@ -137,6 +141,12 @@ export const useWordGridGame = ({
         if (current.some((entry) => entry.word === resolvedWord)) return current
         return [{ word: resolvedWord, score: scoreWord(resolvedWord) }, ...current]
       })
+      if (!removeOnMatch) {
+        setIsDragging(false)
+        setPath([])
+        setLinePoints([])
+        return
+      }
       const idsToRemove = new Set<string>()
       path.forEach(({ row, col }) => {
         const tile = grid[row]?.[col]
@@ -175,6 +185,7 @@ export const useWordGridGame = ({
     grid,
     interactionDisabled,
     path,
+    removeOnMatch,
     scoreWord,
     selectedWord,
     trie,

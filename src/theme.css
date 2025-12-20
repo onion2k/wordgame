@@ -34,6 +34,9 @@
   --tile-selected-bg: hsl(var(--tile-hue) 85% 20%);
   --tile-selected-border: var(--tile-selected-bg);
   --tile-selected-text: hsl(var(--tile-hue) 0% 100%);
+  --tile-highlight-bg: hsl(40 85% 56%);
+  --tile-highlight-text: hsl(40 100% 98%);
+  --tile-highlight-shadow: 0 0 0 3px hsl(40 90% 44% / 0.35);
 
   --selection-line-color: hsl(var(--tile-hue) 85% 54% / 0.25);
   --selection-line-width: 4;
@@ -62,6 +65,8 @@
   --button-text: hsl(130 39% 11%);
   --button-primary-bg: hsl(130 39% 11%);
   --button-primary-text: hsl(130 30% 91%);
+  --button-disabled-bg: hsl(130 0% 86%);
+  --button-disabled-text: hsl(130 10% 45%);
 
   --notification-bg: hsl(130 39% 11%);
   --notification-text: hsl(130 30% 91%);

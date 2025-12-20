@@ -146,6 +146,13 @@
   transform: scale(1.05);
 }
 
+.tile.highlight {
+  background: var(--tile-highlight-bg);
+  color: var(--tile-highlight-text);
+  box-shadow: var(--tile-highlight-shadow);
+  animation: hint-pulse 420ms ease;
+}
+
 .tile.removing {
   opacity: 0;
   transform: scale(0.6);
@@ -354,6 +361,14 @@
   transform: translateY(0) scale(0.98);
 }
 
+.controls button:disabled {
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+  background: var(--button-disabled-bg);
+  color: var(--button-disabled-text);
+}
+
 .controls button:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px hsl(130 39% 11% / 0.15);
@@ -438,6 +453,18 @@
     transform: translateY(0) scale(1);
     opacity: 1;
     letter-spacing: var(--tracking-wide);
+  }
+}
+
+@keyframes hint-pulse {
+  0% {
+    transform: scale(0.96);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
