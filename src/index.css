@@ -1,9 +1,9 @@
 :root {
-  font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  line-height: 1.5;
+  font-family: var(--font-family-base);
+  line-height: var(--line-height-base);
   font-weight: 400;
-  color: #0f172a;
-  background-color: #e2e8f0;
+  color: var(--page-text);
+  background-color: var(--page-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -17,9 +17,10 @@
 body {
   margin: 0;
   min-height: 100dvh;
-  background: radial-gradient(circle at 15% 20%, rgba(14, 165, 233, 0.12), transparent 30%),
-    radial-gradient(circle at 85% 35%, rgba(79, 70, 229, 0.12), transparent 34%),
-    linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  background-color: var(--page-bg);
+  background-image: radial-gradient(circle at 15% 20%, var(--page-glow-primary), transparent 30%),
+    radial-gradient(circle at 85% 35%, var(--page-glow-secondary), transparent 34%),
+    linear-gradient(180deg, var(--page-gradient-top) 0%, var(--page-gradient-bottom) 100%);
 }
 
 #root {

@@ -1,0 +1,114 @@
+:root {
+  --font-family-base: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-size-eyebrow: 0.9rem;
+  --font-size-title: clamp(1.75rem, 4vw, 2.25rem);
+  --font-size-tagline: 1rem;
+  --font-size-selected: 1.1rem;
+  --font-size-found-header: 0.8rem;
+  --font-size-found-empty: 0.95rem;
+  --line-height-base: 1.5;
+  --tracking-wide: 0.08em;
+  --tracking-medium: 0.06em;
+
+  /* Colors (update these to theme the app) */
+  --page-text: hsl(130 39% 11%);
+  --page-bg: hsl(130 30% 91%);
+  --page-gradient-top: hsl(130 100% 98%);
+  --page-gradient-bottom: hsl(130 30% 91%);
+  --page-glow-primary: hsl(0 85% 54% / 0.12);
+  --page-glow-secondary: hsl(40 72% 58% / 0.12);
+
+  --app-panel-bg: linear-gradient(135deg, hsl(130 100% 98%), hsl(130 30% 99%));
+  --app-panel-border: hsl(130 30% 91%);
+
+  --header-eyebrow-text: hsl(130 15% 35%);
+  --header-title-text: hsl(130 39% 11%);
+  --header-tagline-text: hsl(130 25% 38%);
+
+  --tile-hue: 200;
+  --tile-bg: hsl(var(--tile-hue) 0% 100% / 0.6);
+  --tile-border: hsl(var(--tile-hue) 24% 81%);
+  --tile-text: hsl(var(--tile-hue) 39% 11%);
+  --tile-filled-bg: hsl(var(--tile-hue) 85% 54%);
+  --tile-filled-text: hsl(var(--tile-hue) 0% 98%);
+  --tile-selected-bg: hsl(var(--tile-hue) 85% 20%);
+  --tile-selected-border: var(--tile-selected-bg);
+  --tile-selected-text: hsl(var(--tile-hue) 0% 100%);
+
+  --selection-line-color: hsl(var(--tile-hue) 85% 54% / 0.25);
+  --selection-line-width: 4;
+
+  --selected-word-bg: hsl(130 0% 100% / 0.75);
+  --selected-word-border: hsl(130 20% 64% / 0.6);
+  --selected-word-text: hsl(130 39% 11%);
+
+  --found-words-bg: hsl(130 0% 100% / 0.85);
+  --found-words-border: hsl(130 20% 64% / 0.55);
+  --found-words-header-text: hsl(130 39% 11%);
+  --found-words-empty-text: hsl(130 25% 38%);
+  --found-words-item-bg: hsl(130 20% 64% / 0.15);
+  --found-words-item-text: hsl(130 39% 11%);
+  --found-words-score-text: hsl(120 83% 53%);
+  --found-words-count-bg: hsl(130 39% 11%);
+  --found-words-count-text: hsl(130 30% 91%);
+
+  --button-bg: hsl(130 0% 100%);
+  --button-text: hsl(130 39% 11%);
+  --button-primary-bg: hsl(130 39% 11%);
+  --button-primary-text: hsl(130 30% 91%);
+
+  --notification-bg: hsl(130 39% 11%);
+  --notification-text: hsl(130 30% 91%);
+  --notification-border: hsl(130 30% 17%);
+
+  --app-max-width: 600px;
+
+  --space-unit: 0.25rem;
+  --space-step: 0.1rem;
+
+  --space-2xs: var(--space-unit);
+  --space-xs: calc(var(--space-unit) + var(--space-step));
+  --space-sm: calc(var(--space-unit) + (2 * var(--space-step)));
+  --space-md: calc(var(--space-unit) + (2.5 * var(--space-step)));
+  --space-lg: calc(var(--space-unit) + (4 * var(--space-step)));
+  --space-xl: calc(var(--space-unit) + (5 * var(--space-step)));
+  --space-2xl: calc(var(--space-unit) + (6 * var(--space-step)));
+  --space-3xl: calc(var(--space-unit) + (7 * var(--space-step)));
+  --space-4xl: calc(var(--space-unit) + (7.5 * var(--space-step)));
+  --space-5xl: calc(var(--space-unit) + (8.5 * var(--space-step)));
+
+  --app-gap: calc(var(--space-unit) * 6);
+  --app-padding: calc(var(--space-unit) * 5);
+  --game-area-padding: var(--app-padding);
+  --board-gap: calc(var(--space-unit) * 2.6);
+  --row-gap: calc(var(--space-unit) * 2.2);
+  --controls-gap: calc(var(--space-unit) * 3);
+  --section-gap: calc(var(--space-unit) * 4);
+  --button-padding-y: calc(var(--space-unit) * 3.6);
+  --button-padding-x: calc(var(--space-unit) * 4);
+  --pill-padding-y: calc(var(--space-unit) * 0.8);
+  --pill-padding-x: calc(var(--space-unit) * 2);
+
+  --control-min-width: 120px;
+  --count-min-width: calc(var(--space-unit) * 8);
+  --list-gap: calc(var(--space-unit) * 2);
+  --hover-raise: calc(var(--space-unit) * -0.4);
+
+  --radius-lg: 16px;
+  --radius-md: 14px;
+  --radius-sm: 12px;
+  --radius-xs: 10px;
+  --radius-pill: 999px;
+
+  --border-width: 1px;
+  --border-width-dashed: 1px;
+
+  --shadow-card: 0 10px 35px hsl(130 39% 11% / 0.08);
+  --shadow-card-strong: 0 10px 30px hsl(130 39% 11% / 0.22);
+  --shadow-tile-active: 0 10px 24px hsl(130 39% 11% / 0.25);
+  --shadow-tile-filled: 0 8px 20px hsl(0 85% 54% / 0.2);
+  --shadow-button: 0 8px 24px hsl(130 39% 11% / 0.12);
+  --shadow-button-hover: 0 12px 28px hsl(130 39% 11% / 0.18);
+  --shadow-tile-inset: inset 0 1px 0 hsl(0 0% 100% / 0.8);
+  --shadow-accent-glow: drop-shadow(0 8px 12px hsl(0 85% 54% / 0.25));
+}
