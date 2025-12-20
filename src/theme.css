@@ -38,6 +38,12 @@
   --selection-line-color: hsl(var(--tile-hue) 85% 54% / 0.25);
   --selection-line-width: 4;
 
+  --timer-height: 6px;
+  --timer-track-bg: hsl(130 20% 64% / 0.25);
+  --timer-fill-bg: hsl(0 85% 54% / 0.85);
+  --board-overlay-bg: hsl(130 39% 11% / 0.68);
+  --board-overlay-text: hsl(130 30% 91%);
+
   --selected-word-bg: hsl(130 0% 100% / 0.75);
   --selected-word-border: hsl(130 20% 64% / 0.6);
   --selected-word-text: hsl(130 39% 11%);

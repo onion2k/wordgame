@@ -14,6 +14,7 @@ export type UseWordGridGameOptions = {
   dictionary?: string[]
   alphabet?: string
   scoringFn?: (word: string) => number
+  interactionDisabled?: boolean
 }
 
 export type UseWordGridGameResult = {
@@ -42,6 +43,7 @@ export const useWordGridGame = ({
   dictionary,
   alphabet = ALPHABET,
   scoringFn,
+  interactionDisabled = false,
 }: UseWordGridGameOptions): UseWordGridGameResult => {
   const clampedSize = Math.max(1, Math.floor(gridSize))
   const scoreWord = useCallback((word: string) => (scoringFn ? scoringFn(word) : word.length), [
@@ -93,16 +95,16 @@ export const useWordGridGame = ({
 
   const startDrag = useCallback(
     (cell: Cell) => {
-      if (isResolving) return
+      if (isResolving || interactionDisabled) return
       setIsDragging(true)
       setPath([cell])
     },
-    [isResolving]
+    [interactionDisabled, isResolving]
   )
 
   const extendPath = useCallback(
     (cell: Cell) => {
-      if (!isDragging) return
+      if (!isDragging || interactionDisabled) return
       setPath((currentPath) => {
         const last = currentPath[currentPath.length - 1]
         if (!last) return [cell]
@@ -119,10 +121,16 @@ export const useWordGridGame = ({
         return [...currentPath, cell]
       })
     },
-    [isDragging]
+    [interactionDisabled, isDragging]
   )
 
   const stopDrag = useCallback(() => {
+    if (interactionDisabled) {
+      setIsDragging(false)
+      setPath([])
+      setLinePoints([])
+      return
+    }
     const resolvedWord = sanitizeWord(selectedWord)
     if (resolvedWord && validWords.has(resolvedWord) && path.length > 0) {
       setFoundWords((current) => {
@@ -160,12 +168,30 @@ export const useWordGridGame = ({
     setIsDragging(false)
     setPath([])
     setLinePoints([])
-  }, [allWords, alphabet, createTile, grid, path, scoreWord, selectedWord, trie, validWords])
+  }, [
+    allWords,
+    alphabet,
+    createTile,
+    grid,
+    interactionDisabled,
+    path,
+    scoreWord,
+    selectedWord,
+    trie,
+    validWords,
+  ])
 
   useEffect(() => {
     window.addEventListener('pointerup', stopDrag)
     return () => window.removeEventListener('pointerup', stopDrag)
   }, [stopDrag])
+
+  useEffect(() => {
+    if (!interactionDisabled) return
+    setIsDragging(false)
+    setPath([])
+    setLinePoints([])
+  }, [interactionDisabled])
 
   const computeLine = useCallback(() => {
     if (!boardRef.current) return { points: [], size: { width: 0, height: 0 } }
