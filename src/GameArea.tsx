@@ -3,20 +3,44 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { DIRECTIONS } from './game/constants'
 import { isPointerInCenter } from './game/pointer'
 import type { GameAreaProps } from './game/types'
-import { useWordGridGame } from './game/useWordGridGame'
+import type { UseWordGridGameResult } from './game/useWordGridGameBase'
+import { useWordGridHuntGame } from './game/useWordGridHuntGame'
+import { useWordGridMatchGame } from './game/useWordGridMatchGame'
 import { sanitizeWord } from './game/words'
 
 const HINT_DURATION_MS = 1400
 
-function GameArea({
-  gridSize = 8,
-  words = [],
-  dictionary,
-  timerSeconds = 60,
-  removeOnMatch = true,
-  targetWords = [],
-  wordPlacement = 'line',
-}: GameAreaProps) {
+type WordGridHookOptions = {
+  gridSize?: number
+  words?: string[]
+  dictionary?: string[]
+  interactionDisabled?: boolean
+  wordPlacement?: 'line' | 'path'
+}
+
+type UseGridHook = (options: WordGridHookOptions) => UseWordGridGameResult
+
+type GameAreaState = {
+  gridState: UseWordGridGameResult
+  highlightCells: Set<string>
+  isHintActive: boolean
+  isRoundComplete: boolean
+  isTimeUp: boolean
+  sanitizedTargets: string[]
+  timerEnabled: boolean
+  timerProgress: number
+  triggerHint: () => void
+}
+
+const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameAreaState => {
+  const {
+    gridSize = 8,
+    words = [],
+    dictionary,
+    timerSeconds = 60,
+    targetWords = [],
+    wordPlacement = 'line',
+  } = props
   const timeLimitMs = Math.max(
     0,
     Math.floor((Number.isFinite(timerSeconds) ? timerSeconds : 0) * 1000)
@@ -35,29 +59,11 @@ function GameArea({
   const [isRoundComplete, setIsRoundComplete] = useState(false)
   const [isHintActive, setIsHintActive] = useState(false)
 
-  const {
-    grid,
-    path,
-    isDragging,
-    removingIds,
-    newIds,
-    linePoints,
-    boardSize,
-    foundWords,
-    totalScore,
-    selectedWord,
-    size,
-    boardRef,
-    tileRefs,
-    startDrag,
-    extendPath,
-    stopDrag,
-  } = useWordGridGame({
+  const gridState = useGridHook({
     gridSize,
     words,
     dictionary,
     interactionDisabled: isTimeUp || isRoundComplete,
-    removeOnMatch,
     wordPlacement,
   })
 
@@ -76,18 +82,18 @@ function GameArea({
 
   useEffect(() => {
     if (targetSet.size === 0) return
-    const foundSet = new Set(foundWords.map((entry) => entry.word))
+    const foundSet = new Set(gridState.foundWords.map((entry) => entry.word))
     const completed = Array.from(targetSet).every((word) => foundSet.has(word))
     if (completed) {
       setIsRoundComplete(true)
     }
-  }, [foundWords, targetSet])
+  }, [gridState.foundWords, targetSet])
 
   const highlightCells = useMemo(() => {
     if (!isHintActive || sanitizedTargets.length === 0) {
       return new Set<string>()
     }
-    const size = grid.length
+    const size = gridState.grid.length
     const matches = new Set<string>()
     const findWordPath = (word: string) => {
       if (word.length === 0) return null
@@ -99,7 +105,7 @@ function GameArea({
         index: number,
         visited: Set<string>
       ): Array<{ row: number; col: number }> | null => {
-        const tile = grid[row]?.[col]
+        const tile = gridState.grid[row]?.[col]
         if (!tile || tile.letter !== word[index]) return null
         const key = `${row}-${col}`
         if (visited.has(key)) return null
@@ -121,7 +127,7 @@ function GameArea({
       }
       for (let row = 0; row < size; row += 1) {
         for (let col = 0; col < size; col += 1) {
-          const tile = grid[row]?.[col]
+          const tile = gridState.grid[row]?.[col]
           if (!tile || tile.letter !== word[0]) continue
           const path = walk(row, col, 0, new Set())
           if (path) return path
@@ -137,7 +143,7 @@ function GameArea({
       })
     })
     return matches
-  }, [grid, isHintActive, sanitizedTargets])
+  }, [gridState.grid, isHintActive, sanitizedTargets])
 
   const triggerHint = () => {
     if (sanitizedTargets.length === 0) return
@@ -171,15 +177,60 @@ function GameArea({
   }, [timeLimitMs, timerEnabled, timerSeed])
 
   useEffect(() => {
-    if (timerEnabled && foundWords.length > prevFoundWordsRef.current) {
+    if (timerEnabled && gridState.foundWords.length > prevFoundWordsRef.current) {
       setTimerSeed((current) => current + 1)
     }
-    prevFoundWordsRef.current = foundWords.length
-  }, [foundWords.length, timerEnabled])
+    prevFoundWordsRef.current = gridState.foundWords.length
+  }, [gridState.foundWords.length, timerEnabled])
 
+  const timerProgress = timerEnabled ? Math.min(timeLeftMs / timeLimitMs, 1) : 0
+
+  return {
+    gridState,
+    highlightCells,
+    isHintActive,
+    isRoundComplete,
+    isTimeUp,
+    sanitizedTargets,
+    timerEnabled,
+    timerProgress,
+    triggerHint,
+  }
+}
+
+type GameAreaViewProps = GameAreaState
+
+const GameAreaView = ({
+  gridState,
+  highlightCells,
+  isHintActive,
+  isRoundComplete,
+  isTimeUp,
+  sanitizedTargets,
+  timerEnabled,
+  timerProgress,
+  triggerHint,
+}: GameAreaViewProps) => {
+  const {
+    grid,
+    path,
+    isDragging,
+    removingIds,
+    newIds,
+    linePoints,
+    boardSize,
+    foundWords,
+    totalScore,
+    selectedWord,
+    size,
+    boardRef,
+    tileRefs,
+    startDrag,
+    extendPath,
+    stopDrag,
+  } = gridState
   const isActive = (rowIndex: number, columnIndex: number) =>
     path.some((cell) => cell.row === rowIndex && cell.col === columnIndex)
-  const timerProgress = timerEnabled ? Math.min(timeLeftMs / timeLimitMs, 1) : 0
 
   return (
     <section className="game-area" aria-label="Game board">
@@ -254,10 +305,7 @@ function GameArea({
 
       {timerEnabled ? (
         <div className="timer" aria-hidden="true">
-          <span
-            className="timer__fill"
-            style={{ ['--timer-progress' as const]: timerProgress }}
-          />
+          <span className="timer__fill" style={{ ['--timer-progress' as const]: timerProgress }} />
         </div>
       ) : null}
 
@@ -304,9 +352,24 @@ function GameArea({
           </ul>
         )}
       </div>
-
     </section>
   )
+}
+
+function GameAreaMatch(props: GameAreaProps) {
+  const state = useGameAreaState(useWordGridMatchGame, props)
+  return <GameAreaView {...state} />
+}
+
+function GameAreaHunt(props: GameAreaProps) {
+  const state = useGameAreaState(useWordGridHuntGame, props)
+  return <GameAreaView {...state} />
+}
+
+function GameArea(props: GameAreaProps) {
+  const { removeOnMatch = true } = props
+
+  return removeOnMatch ? <GameAreaMatch {...props} /> : <GameAreaHunt {...props} />
 }
 
 export default GameArea

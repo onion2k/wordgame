@@ -8,14 +8,14 @@ import { ensureSolvableGrid } from './solver'
 import type { Cell, Tile } from './types'
 import { buildTrie, sanitizeWord } from './words'
 
-export type UseWordGridGameOptions = {
+export type UseWordGridGameBaseOptions = {
   gridSize?: number
   words?: string[]
   dictionary?: string[]
   alphabet?: string
   scoringFn?: (word: string) => number
   interactionDisabled?: boolean
-  removeOnMatch?: boolean
+  removeOnMatch: boolean
   wordPlacement?: 'line' | 'path'
 }
 
@@ -39,16 +39,16 @@ export type UseWordGridGameResult = {
   stopDrag: () => void
 }
 
-export const useWordGridGame = ({
+export const useWordGridGameBase = ({
   gridSize = 8,
   words = [],
   dictionary,
   alphabet = ALPHABET,
   scoringFn,
   interactionDisabled = false,
-  removeOnMatch = true,
+  removeOnMatch,
   wordPlacement = 'line',
-}: UseWordGridGameOptions): UseWordGridGameResult => {
+}: UseWordGridGameBaseOptions): UseWordGridGameResult => {
   const clampedSize = Math.max(1, Math.floor(gridSize))
   const scoreWord = useCallback((word: string) => (scoringFn ? scoringFn(word) : word.length), [
     scoringFn,
