@@ -314,10 +314,30 @@ const GameAreaView = ({
     path.some((cell) => cell.row === rowIndex && cell.col === columnIndex)
   const boardStyle: CSSVars = { '--grid-size': size }
   const timerStyle: CSSVars = { '--timer-progress': timerProgress }
+  const getCellFromPoint = (x: number, y: number) => {
+    const target = document.elementFromPoint(x, y) as HTMLElement | null
+    const tileEl = target?.closest<HTMLSpanElement>('.tile')
+    if (!tileEl) return null
+    const row = Number(tileEl.dataset.row)
+    const col = Number(tileEl.dataset.col)
+    if (!Number.isFinite(row) || !Number.isFinite(col)) return null
+    return { row, col }
+  }
 
   return (
     <section className="game-area" aria-label="Game board">
-      <div className="board" ref={boardRef} style={boardStyle}>
+      <div
+        className="board"
+        ref={boardRef}
+        style={boardStyle}
+        onPointerMove={(event) => {
+          if (isTimeUp || !isDragging) return
+          const cell = getCellFromPoint(event.clientX, event.clientY)
+          if (!cell) return
+          if (!grid[cell.row]?.[cell.col]) return
+          extendPath(cell)
+        }}
+      >
         <svg
           className="selection-line"
           viewBox={`0 0 ${Math.max(boardSize.width, 1)} ${Math.max(boardSize.height, 1)}`}
@@ -344,6 +364,8 @@ const GameAreaView = ({
                     isRemoving ? ' removing' : ''
                   }${isNew ? ' new' : ''}${isHighlighted ? ' highlight' : ''}`}
                   key={tileKey}
+                  data-row={rowIndex}
+                  data-col={columnIndex}
                   ref={(el) => {
                     if (tile) {
                       if (el) {
