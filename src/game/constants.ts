@@ -2,6 +2,7 @@ export const REMOVE_DURATION = 220
 export const GRAVITY_DURATION = 260
 export const REFILL_POP_DURATION = 220
 
+export const MAX_GRID_SIZE = 8
 export const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 export const DIRECTIONS = [

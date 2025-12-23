@@ -2,6 +2,7 @@ import './App.css'
 import { useEffect, useMemo, useState } from 'react'
 
 import GameArea from './GameArea'
+import { MAX_GRID_SIZE } from './game/constants'
 import { sanitizeWord } from './game/words'
 import booksTxt from './books.txt?raw'
 import wordsTxt from './words.filtered.txt?raw'
@@ -29,7 +30,7 @@ type BookPair = {
 }
 
 const GAME_MODE_COOKIE = 'bookworm_game_mode'
-const MAX_BOOK_GRID_SIZE = 10
+const MAX_BOOK_GRID_SIZE = MAX_GRID_SIZE
 const MAX_BOOK_WORD_LENGTH = MAX_BOOK_GRID_SIZE * MAX_BOOK_GRID_SIZE
 
 const readCookie = (name: string) => {
@@ -120,7 +121,7 @@ function App({ bookTitle = 'Pride and Prejudice', bookAuthor = 'Jane Austen' }: 
       {
         id: 'relax',
         name: 'Relaxed',
-        gridSize: 9,
+        gridSize: MAX_GRID_SIZE,
         words: ['BREEZE', 'CALM', 'FLOAT', 'DRIFT', 'GLOW'],
         timerSeconds: 0,
       },
