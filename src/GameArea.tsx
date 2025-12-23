@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 
 import { DIRECTIONS } from './game/constants'
 import { isPointerInCenter } from './game/pointer'
@@ -40,6 +41,8 @@ type GameAreaState = {
   revealTitle: () => void
   triggerHint: () => void
 }
+
+type CSSVars = CSSProperties & Record<`--${string}`, string | number>
 
 const formatElapsed = (ms: number) => {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000))
@@ -309,10 +312,12 @@ const GameAreaView = ({
   } = gridState
   const isActive = (rowIndex: number, columnIndex: number) =>
     path.some((cell) => cell.row === rowIndex && cell.col === columnIndex)
+  const boardStyle: CSSVars = { '--grid-size': size }
+  const timerStyle: CSSVars = { '--timer-progress': timerProgress }
 
   return (
     <section className="game-area" aria-label="Game board">
-      <div className="board" ref={boardRef} style={{ ['--grid-size' as const]: size }}>
+      <div className="board" ref={boardRef} style={boardStyle}>
         <svg
           className="selection-line"
           viewBox={`0 0 ${Math.max(boardSize.width, 1)} ${Math.max(boardSize.height, 1)}`}
@@ -385,7 +390,7 @@ const GameAreaView = ({
 
       {timerEnabled ? (
         <div className="timer" aria-hidden="true">
-          <span className="timer__fill" style={{ ['--timer-progress' as const]: timerProgress }} />
+          <span className="timer__fill" style={timerStyle} />
         </div>
       ) : null}
       {bookTimerEnabled ? (
@@ -445,7 +450,7 @@ const GameAreaView = ({
               <li
                 key={word}
                 className="found-words__item"
-                style={{ ['--list-delay' as const]: `${index * 40}ms` }}
+                style={{ '--list-delay': `${index * 40}ms` } as CSSVars}
               >
                 <span className="found-words__word">{word}</span>
                 <span className="found-words__score">{score}</span>
