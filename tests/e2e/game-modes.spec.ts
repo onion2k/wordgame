@@ -26,6 +26,15 @@ test.describe('Game modes', () => {
     await expect(page.locator('.timer')).toHaveCount(0)
   })
 
+  test('switching modes persists selection in the cookie', async ({ page }) => {
+    await page.goto('/')
+
+    await selectMode(page, 'Speed Run')
+
+    const cookieValue = await page.evaluate(() => document.cookie)
+    expect(cookieValue).toContain('bookworm_game_mode=speed')
+  })
+
   test('book hunt reveals title and author on demand', async ({ page }) => {
     await page.goto('/')
     await selectMode(page, 'Book Hunt')
