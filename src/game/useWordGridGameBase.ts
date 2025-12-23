@@ -17,6 +17,7 @@ export type UseWordGridGameBaseOptions = {
   interactionDisabled?: boolean
   removeOnMatch: boolean
   wordPlacement?: 'line' | 'path'
+  roundSeed?: number
 }
 
 export type UseWordGridGameResult = {
@@ -48,6 +49,7 @@ export const useWordGridGameBase = ({
   interactionDisabled = false,
   removeOnMatch,
   wordPlacement = 'line',
+  roundSeed,
 }: UseWordGridGameBaseOptions): UseWordGridGameResult => {
   const clampedSize = Math.max(1, Math.floor(gridSize))
   const scoreWord = useCallback((word: string) => (scoringFn ? scoringFn(word) : word.length), [
@@ -95,7 +97,7 @@ export const useWordGridGameBase = ({
     setNewIds(new Set())
     setIsResolving(false)
     setFoundWords([])
-  }, [clampedSize, createTile, wordPlacement, words])
+  }, [clampedSize, createTile, roundSeed, wordPlacement, words])
 
   const startDrag = useCallback(
     (cell: Cell) => {

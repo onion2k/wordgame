@@ -67,6 +67,19 @@ export const buildWordPathGrid = (size: number, alphabet: string, words: string[
     return result
   }
 
+  const isStraightPath = (path: Cell[]) => {
+    if (path.length < 2) return true
+    const first = path[0]
+    const second = path[1]
+    const deltaRow = second.row - first.row
+    const deltaCol = second.col - first.col
+    return path.every((cell, index) => {
+      if (index === 0) return true
+      const prev = path[index - 1]
+      return cell.row - prev.row === deltaRow && cell.col - prev.col === deltaCol
+    })
+  }
+
   const tryPlaceWord = (word: string) => {
     const attempts = size * size * 6
     for (let attempt = 0; attempt < attempts; attempt += 1) {
@@ -103,6 +116,9 @@ export const buildWordPathGrid = (size: number, alphabet: string, words: string[
       }
 
       if (!walk(startRow, startCol, 0)) continue
+      if (word.length > size && isStraightPath(path)) {
+        continue
+      }
       path.forEach(({ row, col }, index) => {
         grid[row][col] = word[index]
       })

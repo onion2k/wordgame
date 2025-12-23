@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import GameArea from './GameArea'
 import { sanitizeWord } from './game/words'
+import booksTxt from './books.txt?raw'
 import wordsTxt from './words.filtered.txt?raw'
 
 type GameConfig = {
@@ -22,7 +23,14 @@ type AppProps = {
   bookAuthor?: string
 }
 
+type BookPair = {
+  title: string
+  author: string
+}
+
 const GAME_MODE_COOKIE = 'bookworm_game_mode'
+const MAX_BOOK_GRID_SIZE = 10
+const MAX_BOOK_WORD_LENGTH = MAX_BOOK_GRID_SIZE * MAX_BOOK_GRID_SIZE
 
 const readCookie = (name: string) => {
   if (typeof document === 'undefined') return null
@@ -32,20 +40,67 @@ const readCookie = (name: string) => {
   return decodeURIComponent(match.slice(name.length + 1))
 }
 
+const normalizeBookLabel = (value: string) =>
+  value
+    .replace(/[^A-Za-z\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+const isLettersOnlyLabel = (value: string) => /^[A-Za-z\s]+$/.test(value.trim())
+
+const parseBookPairs = (raw: string): BookPair[] =>
+  raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith('#'))
+    .map((line) => {
+      const [title, ...rest] = line.split('|')
+      const rawTitle = (title ?? '').trim()
+      const rawAuthor = rest.join('|').trim()
+      if (!isLettersOnlyLabel(rawTitle) || !isLettersOnlyLabel(rawAuthor)) {
+        return null
+      }
+      const normalizedTitle = normalizeBookLabel(rawTitle)
+      const normalizedAuthor = normalizeBookLabel(rawAuthor)
+      if (
+        sanitizeWord(normalizedTitle).length > MAX_BOOK_WORD_LENGTH ||
+        sanitizeWord(normalizedAuthor).length > MAX_BOOK_WORD_LENGTH
+      ) {
+        return null
+      }
+      return {
+        title: normalizedTitle,
+        author: normalizedAuthor,
+      }
+    })
+    .filter((pair): pair is BookPair => Boolean(pair?.title && pair.author))
+
 function App({ bookTitle = 'Pride and Prejudice', bookAuthor = 'Jane Austen' }: AppProps) {
   const dictionary = wordsTxt
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
+  const [bookRoundSeed, setBookRoundSeed] = useState(0)
+  const bookPairs = useMemo(() => parseBookPairs(booksTxt), [])
+  const activeBookPair = useMemo(() => {
+    if (bookPairs.length === 0) {
+      return {
+        title: normalizeBookLabel(bookTitle),
+        author: normalizeBookLabel(bookAuthor),
+      }
+    }
+    const index = Math.floor(Math.random() * bookPairs.length)
+    return bookPairs[index]
+  }, [bookAuthor, bookPairs, bookRoundSeed, bookTitle])
   const bookTargets = useMemo(
     () =>
-      [bookTitle, bookAuthor].map((word) => word.trim()).filter((word) => word.length > 0),
-    [bookAuthor, bookTitle]
+      [activeBookPair.title, activeBookPair.author]
+        .map((word) => word.trim())
+        .filter((word) => word.length > 0)
+        .filter((word) => sanitizeWord(word).length <= MAX_BOOK_WORD_LENGTH),
+    [activeBookPair]
   )
-  const bookGridSize = useMemo(() => {
-    const lengths = bookTargets.map((word) => sanitizeWord(word).length).filter((len) => len > 0)
-    return Math.max(10, ...lengths)
-  }, [bookTargets])
+  const bookGridSize = MAX_BOOK_GRID_SIZE
   const gameConfigs: GameConfig[] = useMemo(
     () => [
       {
@@ -72,7 +127,7 @@ function App({ bookTitle = 'Pride and Prejudice', bookAuthor = 'Jane Austen' }: 
       {
         id: 'book-hunt',
         name: 'Book Hunt',
-        gridSize: 10,
+        gridSize: bookGridSize,
         words: bookTargets,
         dictionary: bookTargets,
         timerSeconds: 0,
@@ -138,6 +193,11 @@ function App({ bookTitle = 'Pride and Prejudice', bookAuthor = 'Jane Austen' }: 
           removeOnMatch={activeGame.removeOnMatch}
           targetWords={activeGame.targetWords}
           wordPlacement={activeGame.wordPlacement}
+          onNewRound={() => {
+            if (activeGame.id === 'book-hunt') {
+              setBookRoundSeed((current) => current + 1)
+            }
+          }}
         />
       ) : null}
     </div>

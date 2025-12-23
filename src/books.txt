@@ -1,0 +1,10 @@
+# Title | Author
+Pride and Prejudice | Jane Austen
+Moby Dick | Herman Melville
+Great Expectations | Charles Dickens
+To Kill a Mockingbird | Harper Lee
+The Hobbit | J R R Tolkien
+The Great Gatsby | F Scott Fitzgerald
+The Catcher in the Rye | J D Salinger
+Wuthering Heights | Emily Bronte
+The Grapes of Wrath | John Steinbeck
