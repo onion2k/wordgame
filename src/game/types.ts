@@ -7,6 +7,7 @@ export type GameAreaProps = {
   removeOnMatch?: boolean
   targetWords?: string[]
   wordPlacement?: 'line' | 'path'
+  onNewRound?: () => void
 }
 export type Tile = { id: string; letter: string }
 export type TrieNode = { children: Map<string, TrieNode>; isWord: boolean }

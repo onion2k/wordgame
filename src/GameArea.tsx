@@ -16,20 +16,36 @@ type WordGridHookOptions = {
   dictionary?: string[]
   interactionDisabled?: boolean
   wordPlacement?: 'line' | 'path'
+  roundSeed?: number
 }
 
 type UseGridHook = (options: WordGridHookOptions) => UseWordGridGameResult
 
 type GameAreaState = {
   gridState: UseWordGridGameResult
+  bookTimerEnabled: boolean
+  elapsedMs: number
   highlightCells: Set<string>
   isHintActive: boolean
   isRoundComplete: boolean
   isTimeUp: boolean
+  newRound: () => void
+  revealedAuthor: boolean
+  revealedTitle: boolean
   sanitizedTargets: string[]
+  targetWords: string[]
   timerEnabled: boolean
   timerProgress: number
+  revealAuthor: () => void
+  revealTitle: () => void
   triggerHint: () => void
+}
+
+const formatElapsed = (ms: number) => {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
 }
 
 const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameAreaState => {
@@ -40,6 +56,7 @@ const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameA
     timerSeconds = 60,
     targetWords = [],
     wordPlacement = 'line',
+    onNewRound,
   } = props
   const timeLimitMs = Math.max(
     0,
@@ -47,9 +64,12 @@ const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameA
   )
   const [timeLeftMs, setTimeLeftMs] = useState(timeLimitMs)
   const [timerSeed, setTimerSeed] = useState(0)
+  const [roundSeed, setRoundSeed] = useState(0)
+  const [elapsedMs, setElapsedMs] = useState(0)
   const prevFoundWordsRef = useRef(0)
   const hintTimeoutRef = useRef<number | null>(null)
   const timerEnabled = timeLimitMs > 0
+  const bookTimerEnabled = !props.removeOnMatch && targetWords.length > 0
   const isTimeUp = timerEnabled && timeLeftMs <= 0
   const sanitizedTargets = useMemo(
     () => targetWords.map((word) => sanitizeWord(word)).filter((word) => word.length > 0),
@@ -58,6 +78,8 @@ const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameA
   const targetSet = useMemo(() => new Set(sanitizedTargets), [sanitizedTargets])
   const [isRoundComplete, setIsRoundComplete] = useState(false)
   const [isHintActive, setIsHintActive] = useState(false)
+  const [revealedTitle, setRevealedTitle] = useState(false)
+  const [revealedAuthor, setRevealedAuthor] = useState(false)
 
   const gridState = useGridHook({
     gridSize,
@@ -65,11 +87,15 @@ const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameA
     dictionary,
     interactionDisabled: isTimeUp || isRoundComplete,
     wordPlacement,
+    roundSeed,
   })
 
   useEffect(() => {
     setIsRoundComplete(false)
-  }, [gridSize, targetSet, wordPlacement, words])
+    setRevealedTitle(false)
+    setRevealedAuthor(false)
+    setIsHintActive(false)
+  }, [gridSize, roundSeed, targetSet, wordPlacement, words])
 
   useEffect(() => {
     return () => {
@@ -90,11 +116,18 @@ const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameA
   }, [gridState.foundWords, targetSet])
 
   const highlightCells = useMemo(() => {
-    if (!isHintActive || sanitizedTargets.length === 0) {
+    if (sanitizedTargets.length === 0) {
       return new Set<string>()
     }
     const size = gridState.grid.length
     const matches = new Set<string>()
+    const foundTargets = gridState.foundWords
+      .map((entry) => entry.word)
+      .filter((word) => targetSet.has(word))
+    const wordsToHighlight = isHintActive ? sanitizedTargets : foundTargets
+    if (wordsToHighlight.length === 0) {
+      return matches
+    }
     const findWordPath = (word: string) => {
       if (word.length === 0) return null
       const inBounds = (row: number, col: number) =>
@@ -135,7 +168,7 @@ const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameA
       }
       return null
     }
-    sanitizedTargets.forEach((word) => {
+    wordsToHighlight.forEach((word) => {
       const path = findWordPath(word)
       if (!path) return
       path.forEach(({ row, col }) => {
@@ -143,7 +176,7 @@ const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameA
       })
     })
     return matches
-  }, [gridState.grid, isHintActive, sanitizedTargets])
+  }, [gridState.foundWords, gridState.grid, isHintActive, sanitizedTargets, targetSet])
 
   const triggerHint = () => {
     if (sanitizedTargets.length === 0) return
@@ -183,17 +216,54 @@ const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameA
     prevFoundWordsRef.current = gridState.foundWords.length
   }, [gridState.foundWords.length, timerEnabled])
 
+  useEffect(() => {
+    if (!bookTimerEnabled) {
+      setElapsedMs(0)
+      return
+    }
+    setElapsedMs(0)
+  }, [bookTimerEnabled, roundSeed, targetSet])
+
+  useEffect(() => {
+    if (!bookTimerEnabled || isRoundComplete) return
+    let frameId = 0
+    const start = performance.now()
+    const tick = (now: number) => {
+      setElapsedMs(now - start)
+      frameId = requestAnimationFrame(tick)
+    }
+    frameId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frameId)
+  }, [bookTimerEnabled, isRoundComplete, roundSeed, targetSet])
+
   const timerProgress = timerEnabled ? Math.min(timeLeftMs / timeLimitMs, 1) : 0
+  const newRound = () => {
+    setRoundSeed((current) => current + 1)
+    setTimerSeed((current) => current + 1)
+    setTimeLeftMs(timeLimitMs)
+    setIsRoundComplete(false)
+    setIsHintActive(false)
+    setElapsedMs(0)
+    onNewRound?.()
+  }
 
   return {
     gridState,
+    bookTimerEnabled,
+    elapsedMs,
     highlightCells,
     isHintActive,
     isRoundComplete,
     isTimeUp,
+    newRound,
+    revealedAuthor,
+    revealedTitle,
     sanitizedTargets,
+    targetWords,
     timerEnabled,
     timerProgress,
+    revealAuthor: () => setRevealedAuthor(true),
+    revealTitle: () => setRevealedTitle(true),
     triggerHint,
   }
 }
@@ -202,13 +272,21 @@ type GameAreaViewProps = GameAreaState
 
 const GameAreaView = ({
   gridState,
+  bookTimerEnabled,
+  elapsedMs,
   highlightCells,
   isHintActive,
   isRoundComplete,
   isTimeUp,
+  newRound,
+  revealedAuthor,
+  revealedTitle,
   sanitizedTargets,
+  targetWords,
   timerEnabled,
   timerProgress,
+  revealAuthor,
+  revealTitle,
   triggerHint,
 }: GameAreaViewProps) => {
   const {
@@ -298,7 +376,9 @@ const GameAreaView = ({
         ) : null}
         {!isTimeUp && isRoundComplete ? (
           <div className="board-overlay" role="status" aria-live="polite">
-            <span>Round complete</span>
+            <span>
+              {bookTimerEnabled ? `Round complete in ${formatElapsed(elapsedMs)}` : 'Round complete'}
+            </span>
           </div>
         ) : null}
       </div>
@@ -306,6 +386,11 @@ const GameAreaView = ({
       {timerEnabled ? (
         <div className="timer" aria-hidden="true">
           <span className="timer__fill" style={{ ['--timer-progress' as const]: timerProgress }} />
+        </div>
+      ) : null}
+      {bookTimerEnabled ? (
+        <div className="timer-countup" aria-live="polite">
+          <span>{`Time ${formatElapsed(elapsedMs)}`}</span>
         </div>
       ) : null}
 
@@ -333,6 +418,23 @@ const GameAreaView = ({
             <button type="button" onClick={triggerHint} disabled={isHintActive}>
               {isHintActive ? 'Highlighting...' : 'Highlight title + author'}
             </button>
+            <button type="button" onClick={revealTitle} disabled={revealedTitle}>
+              {revealedTitle ? 'Title revealed' : 'Reveal title'}
+            </button>
+            <button type="button" onClick={revealAuthor} disabled={revealedAuthor}>
+              {revealedAuthor ? 'Author revealed' : 'Reveal author'}
+            </button>
+            {isRoundComplete ? (
+              <button type="button" onClick={newRound}>
+                New round
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {sanitizedTargets.length > 0 ? (
+          <div className="found-words__reveal" aria-live="polite">
+            <span>{`Title: ${revealedTitle ? targetWords[0] ?? '' : '???'}`}</span>
+            <span>{`Author: ${revealedAuthor ? targetWords[1] ?? '' : '???'}`}</span>
           </div>
         ) : null}
         {foundWords.length === 0 ? (
