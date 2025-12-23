@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 
-import { DIRECTIONS } from './game/constants'
+import { DIRECTIONS, MAX_GRID_SIZE } from './game/constants'
 import { isPointerInCenter } from './game/pointer'
 import type { GameAreaProps } from './game/types'
 import type { UseWordGridGameResult } from './game/useWordGridGameBase'
@@ -53,7 +53,7 @@ const formatElapsed = (ms: number) => {
 
 const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameAreaState => {
   const {
-    gridSize = 8,
+    gridSize = MAX_GRID_SIZE,
     words = [],
     dictionary,
     timerSeconds = 60,
@@ -81,11 +81,12 @@ const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameA
   const targetSet = useMemo(() => new Set(sanitizedTargets), [sanitizedTargets])
   const [isRoundComplete, setIsRoundComplete] = useState(false)
   const [isHintActive, setIsHintActive] = useState(false)
+  const clampedGridSize = Math.max(1, Math.min(MAX_GRID_SIZE, Math.floor(gridSize)))
   const [revealedTitle, setRevealedTitle] = useState(false)
   const [revealedAuthor, setRevealedAuthor] = useState(false)
 
   const gridState = useGridHook({
-    gridSize,
+    gridSize: clampedGridSize,
     words,
     dictionary,
     interactionDisabled: isTimeUp || isRoundComplete,
@@ -98,7 +99,7 @@ const useGameAreaState = (useGridHook: UseGridHook, props: GameAreaProps): GameA
     setRevealedTitle(false)
     setRevealedAuthor(false)
     setIsHintActive(false)
-  }, [gridSize, roundSeed, targetSet, wordPlacement, words])
+  }, [clampedGridSize, roundSeed, targetSet, wordPlacement, words])
 
   useEffect(() => {
     return () => {

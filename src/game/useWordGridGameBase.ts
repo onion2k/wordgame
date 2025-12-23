@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { MutableRefObject } from 'react'
 
-import { ALPHABET, GRAVITY_DURATION, REFILL_POP_DURATION, REMOVE_DURATION } from './constants'
+import { ALPHABET, GRAVITY_DURATION, MAX_GRID_SIZE, REFILL_POP_DURATION, REMOVE_DURATION } from './constants'
 import { isAdjacent } from './cell'
 import { applyGravity, buildDefaultGrid, removePathFromGrid } from './grid'
 import { ensureSolvableGrid } from './solver'
@@ -51,7 +51,7 @@ export const useWordGridGameBase = ({
   wordPlacement = 'line',
   roundSeed,
 }: UseWordGridGameBaseOptions): UseWordGridGameResult => {
-  const clampedSize = Math.max(1, Math.floor(gridSize))
+  const clampedSize = Math.max(1, Math.min(MAX_GRID_SIZE, Math.floor(gridSize)))
   const scoreWord = useCallback((word: string) => (scoringFn ? scoringFn(word) : word.length), [
     scoringFn,
   ])
