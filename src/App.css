@@ -90,6 +90,8 @@
   justify-items: center;
   width: 100%;
   aspect-ratio: 1 / 1;
+  touch-action: none;
+  user-select: none;
 }
 
 .board-overlay {
@@ -129,6 +131,7 @@
   box-shadow: var(--shadow-tile-inset);
   transition: transform 260ms ease, opacity 200ms ease;
   will-change: transform, opacity;
+  touch-action: none;
 }
 
 .tile.filled {
